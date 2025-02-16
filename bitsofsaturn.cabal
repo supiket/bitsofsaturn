@@ -14,19 +14,20 @@ common warnings
 executable bits-of-saturn
     import:           warnings
     main-is:          Main.hs
-    other-modules:    Types
+    other-modules:    Config
+                    , IPFS
+                    , Social
     build-depends:    base ^>= 4.18.0.0
                     , aeson
-                    , authenticate-oauth
-                    , base16-bytestring
                     , bytestring
-                    , cryptonite
-                    , http-client
-                    , http-client-tls
+                    , directory
+                    , filepath
                     , http-conduit
-                    , http-types
+                    , random
                     , text
-                    , time
     hs-source-dirs:   app
+    default-extensions: DeriveGeneric
+                        , LambdaCase
+                        , OverloadedStrings
     default-language: Haskell2010
     ghc-options:      -Wall
