@@ -1,0 +1,9 @@
+{
+    "intervalMinutes": 240,
+    "xCredentials": {
+        "apiKey": "${API_KEY}",
+        "apiSecret": "${API_SECRET}",
+        "accessToken": "${ACCESS_TOKEN}",
+        "accessSecret": "${ACCESS_SECRET}"
+    }
+}
