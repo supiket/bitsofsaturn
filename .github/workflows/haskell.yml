@@ -20,4 +20,4 @@ jobs:
         uses: cachix/install-nix-action@v23
 
       - name: Enter nix develop shell and build
-        run: nix develop --command bash -c "cabal update && cabal build"
+        run: nix develop --command bash -c "cabal clean && cabal update && cabal build"

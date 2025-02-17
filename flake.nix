@@ -23,7 +23,7 @@
             gcc
             gmp
             libgit2
-            (if system == "aarch64-darwin" then pkgs.zlib else null)
+            (if system == "aarch64-darwin" then zlib else null)
           ];
         };
 
@@ -32,7 +32,7 @@
             haskellPackages.cabal2nix
             gcc
             gmp
-            (if system == "aarch64-darwin" then pkgs.zlib else null)
+            (if system == "aarch64-darwin" then zlib else null)
           ];
         };
       });
