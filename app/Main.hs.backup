@@ -9,10 +9,11 @@ import Data.Char (isAlphaNum)
 import qualified Data.Text as T
 import Farcaster
 import IPFS
-import Network.HTTP.Simple (HttpException, Response, getResponseBody, httpLBS, parseRequest)
+import Network.HTTP.Simple
 import System.Directory (createDirectoryIfMissing, removeFile)
 import System.FilePath ((</>))
 import System.Random (randomRIO)
+import X
 
 downloadImage :: T.Text -> FilePath -> IO Bool
 downloadImage url path = do
@@ -49,6 +50,16 @@ processFile cfg entry = do
 
       farcasterSuccess <- postCastWithImage (farcasterConfig cfg) postText ipfsUrl
       putStrLn $ "farcaster post: " ++ if farcasterSuccess then "success" else "failed"
+
+      -- mediaResult <- uploadToX (xConfig cfg) tempPath
+      -- putStrLn $ "media upload: " ++ show mediaResult
+      -- case mediaResult of
+        -- Left err -> putStrLn $ "media upload failed: " ++ show err
+        -- Right mediaId -> do
+          -- postResult <- createXPost (xConfig cfg) postText [mediaId]
+          -- case postResult of
+            -- Left err -> putStrLn $ "x post failed: " ++ show err
+            -- Right () -> putStrLn "x post success"
 
       removeFile tempPath
     else putStrLn "failed to download image"

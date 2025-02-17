@@ -16,12 +16,13 @@ executable bits-of-saturn
     main-is:          Main.hs
     other-modules:    Config
                     , IPFS
-                    , Social
+                    , Farcaster
     build-depends:    base ^>= 4.18.0.0
                     , aeson
                     , bytestring
                     , directory
                     , filepath
+                    , http-client
                     , http-conduit
                     , random
                     , text

@@ -4,7 +4,6 @@
 
 module Config
   ( Config (..),
-    XConfig (..),
     FarcasterConfig (..),
     IPFSConfig (..),
     loadConfig,
@@ -12,7 +11,7 @@ module Config
   )
 where
 
-import Data.Aeson
+import Data.Aeson (FromJSON, decodeFileStrict)
 import qualified Data.Text as T
 import GHC.Generics (Generic)
 import System.Environment (lookupEnv)
@@ -22,27 +21,20 @@ import Text.Read (readMaybe)
 data Config = Config
   { ipfsConfig :: IPFSConfig,
     farcasterConfig :: FarcasterConfig,
-    xConfig :: XConfig,
     intervalMinutes :: T.Text
   }
   deriving (Show, Generic)
 
 data IPFSConfig = IPFSConfig
   { gateway :: T.Text,
-    folderCID :: T.Text
+    folderCID :: T.Text,
+    pinataToken :: T.Text
   }
   deriving (Show, Generic)
 
-newtype FarcasterConfig = FarcasterConfig
-  { authToken :: T.Text
-  }
-  deriving (Show, Generic)
-
-data XConfig = XConfig
-  { apiKey :: T.Text,
-    apiSecret :: T.Text,
-    accessToken :: T.Text,
-    accessSecret :: T.Text
+data FarcasterConfig = FarcasterConfig
+  { neynarApiKey :: T.Text,
+    neynarUuid :: T.Text
   }
   deriving (Show, Generic)
 
@@ -51,8 +43,6 @@ instance FromJSON Config
 instance FromJSON IPFSConfig
 
 instance FromJSON FarcasterConfig
-
-instance FromJSON XConfig
 
 resolveEnvVar :: T.Text -> IO T.Text
 resolveEnvVar t = case T.stripPrefix "${" t >>= T.stripSuffix "}" of
@@ -83,17 +73,12 @@ loadConfig path = do
     IPFSConfig
       <$> resolveEnvVar (gateway $ ipfsConfig rawConfig)
       <*> resolveEnvVar (folderCID $ ipfsConfig rawConfig)
+      <*> resolveEnvVar (pinataToken $ ipfsConfig rawConfig)
 
   resolvedFarcasterConf <-
     FarcasterConfig
-      <$> resolveEnvVar (authToken $ farcasterConfig rawConfig)
-
-  resolvedXConf <-
-    XConfig
-      <$> resolveEnvVar (apiKey $ xConfig rawConfig)
-      <*> resolveEnvVar (apiSecret $ xConfig rawConfig)
-      <*> resolveEnvVar (accessToken $ xConfig rawConfig)
-      <*> resolveEnvVar (accessSecret $ xConfig rawConfig)
+      <$> resolveEnvVar (neynarApiKey $ farcasterConfig rawConfig)
+      <*> resolveEnvVar (neynarUuid $ farcasterConfig rawConfig)
 
   resolvedInterval <- resolveEnvVar (intervalMinutes rawConfig)
 
@@ -101,6 +86,5 @@ loadConfig path = do
     rawConfig
       { ipfsConfig = resolvedIpfsConf,
         farcasterConfig = resolvedFarcasterConf,
-        xConfig = resolvedXConf,
         intervalMinutes = resolvedInterval
       }

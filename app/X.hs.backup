@@ -1,0 +1,181 @@
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
+module X (uploadToX, createXPost, MediaUploadError(..)) where
+
+import Config (XConfig(..))
+import Control.Exception (SomeException, try)
+import GHC.Generics (Generic)
+import Data.Aeson (FromJSON, Value(..), object, (.=), eitherDecode, encode)
+import qualified Data.Aeson.KeyMap as KM
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy.Char8 as BL8
+import qualified Data.ByteString.Char8 as BS8
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
+import Network.HTTP.Client
+import Network.HTTP.Client.MultipartFormData
+import Network.HTTP.Client.TLS (tlsManagerSettings)
+import Network.HTTP.Types (methodPost, status200)
+import System.IO (hPutStrLn, stderr)
+import System.Environment (getEnv, setEnv)
+
+data MediaUploadError
+  = FileReadError
+  | NetworkError String
+  | ParseError String
+  deriving (Show, Eq)
+
+data TokenResponse = TokenResponse
+  { access_token :: T.Text
+  , refresh_token :: T.Text
+  , expires_in :: Int
+  } deriving (Show, Generic)
+
+instance FromJSON TokenResponse
+
+refreshAccessToken :: XConfig -> IO (Either String T.Text)
+refreshAccessToken cfg = do
+  manager <- newManager tlsManagerSettings
+  request <- parseRequest "https://api.x.com/2/oauth2/token"
+
+  let authToken = "Basic " <> TE.encodeUtf8 (xBasicAuthToken cfg)
+
+  let body = BS8.pack $ "client_id=" ++ T.unpack (xClientId cfg)
+                     ++ "&refresh_token=" ++ T.unpack (xRefreshToken cfg)
+                     ++ "&grant_type=refresh_token"
+
+  let request' = request
+        { method = "POST"
+        , requestHeaders =
+            [ ("Content-Type", "application/x-www-form-urlencoded")
+            , ("Authorization", authToken)
+            ]
+        , requestBody = RequestBodyBS body
+        }
+
+  response <- httpLbs request' manager
+  let bodyContent = responseBody response
+
+  print bodyContent -- TODO: remove
+
+  case eitherDecode bodyContent of
+    Left err -> do
+      hPutStrLn stderr $ "failed to refresh token: " ++ err
+      return $ Left err
+    Right tokenResponse -> do
+      token <- getEnv "X_REFRESH_TOKEN"
+      print token
+      setEnv "X_REFRESH_TOKEN" (T.unpack $ refresh_token tokenResponse)
+      token <- getEnv "X_REFRESH_TOKEN"
+      print token
+      return $ Right (access_token tokenResponse)
+
+prepareAuthHeader :: XConfig -> Request -> IO Request
+prepareAuthHeader cfg req = do
+  tokenResult <- refreshAccessToken cfg
+  case tokenResult of
+    Left err -> do
+      hPutStrLn stderr $ "warning: using stale token due to error: " ++ err
+      return req
+    Right token -> return req { requestHeaders = ("Authorization", "Bearer " <> TE.encodeUtf8 token) : requestHeaders req }
+
+uploadToX :: XConfig -> FilePath -> IO (Either MediaUploadError T.Text)
+uploadToX cfg filePath = do
+  imageDataResult <- try $ BS.readFile filePath
+  case imageDataResult of
+    Left (_ :: SomeException) -> return $ Left FileReadError
+    Right imageData -> do
+      manager <- newManager tlsManagerSettings
+
+      -- Step 1: INIT
+      initRequest <- parseRequest "https://api.x.com/2/media/upload"
+
+      let totalBytes = BS.length imageData
+          mediaType = "image/jpeg"
+          mediaCategory = "tweet_image"
+
+      let initRequestWithBody = initRequest { method = "POST" }
+      requestWithBody <- formDataBody
+        [ partBS "command" "INIT"
+        , partBS "media_type" (BS8.pack mediaType)
+        , partBS "total_bytes" (BS8.pack (show totalBytes))
+        , partBS "media_category" (BS8.pack mediaCategory)
+        ] initRequestWithBody
+
+      initRequest' <- prepareAuthHeader cfg requestWithBody
+
+      print initRequest'
+
+      initResponse <- httpLbs initRequest' manager
+      let initResponseBody = responseBody initResponse
+
+      print initResponseBody
+
+      case eitherDecode initResponseBody of
+        Left err -> return $ Left $ ParseError err
+        Right (Object initObj) -> case KM.lookup "media_id" initObj of
+          Just (String mediaId) -> do
+            -- Step 2: APPEND
+            let appendParams = object
+                  [ "command" .= ("APPEND" :: T.Text)
+                  , "media_id" .= mediaId
+                  , "segment_index" .= (0 :: Int)
+                  ]
+
+            appendRequest <- parseRequest "https://api.x.com/2/media/upload"
+            appendRequest' <- prepareAuthHeader cfg appendRequest
+                  { method = methodPost
+                  , requestHeaders = ("Content-Type", "multipart/form-data") : requestHeaders appendRequest
+                  , requestBody = RequestBodyLBS (encode appendParams)
+                  }
+
+            appendResponse <- httpNoBody appendRequest' manager
+            if responseStatus appendResponse /= status200
+              then return $ Left $ NetworkError "APPEND failed"
+              else do
+                -- Step 3: FINALIZE
+                let finalizeParams = object
+                      [ "command" .= ("FINALIZE" :: T.Text)
+                      , "media_id" .= mediaId
+                      ]
+
+                finalizeRequest <- parseRequest "https://api.x.com/2/media/upload"
+                finalizeRequest' <- prepareAuthHeader cfg finalizeRequest
+                      { method = "POST"
+                      , requestHeaders = ("Content-Type", "multipart/form-data") : requestHeaders finalizeRequest
+                      , requestBody = RequestBodyLBS (encode finalizeParams)
+                      }
+
+                finalizeResponse <- httpLbs finalizeRequest' manager
+                let finalizeResponseBody = responseBody finalizeResponse
+                case eitherDecode finalizeResponseBody of
+                  Left err -> return $ Left $ ParseError err
+                  Right (Object finalizeObj) -> case KM.lookup "media_id" finalizeObj of
+                    Just (String finalMediaId) -> return $ Right finalMediaId
+                    _ -> return $ Left $ ParseError "missing media_id in FINALIZE response"
+          _ -> return $ Left $ ParseError "missing media_id in INIT response"
+
+createXPost :: XConfig -> T.Text -> [T.Text] -> IO (Either MediaUploadError ())
+createXPost cfg postText mediaIds = do
+  manager <- newManager tlsManagerSettings
+
+  initialRequest <- parseRequest "https://api.x.com/2/tweets"
+
+  let params = object
+        [ "text" .= postText
+        , "media" .= object [ "media_ids" .= mediaIds ]
+        ]
+
+  request <- prepareAuthHeader cfg initialRequest
+        { method = "POST"
+        , requestHeaders = ("Content-Type", "application/json") : requestHeaders initialRequest
+        , requestBody = RequestBodyLBS (encode params)
+        }
+
+  responseEither <- try $ httpLbs request manager
+  case responseEither of
+    Right response -> do
+      putStrLn $ "Response body: " ++ show (responseBody response)
+      return $ Right ()
+    Left (ex :: SomeException) -> return $ Left $ NetworkError $ show ex

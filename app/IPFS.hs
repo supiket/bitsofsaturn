@@ -1,69 +1,73 @@
 module IPFS
-  ( IPFSFile (..),
-    listIPFSDirectory,
+  ( DirectoryEntry (..),
+    listPinataDirectory,
     makeIPFSUrl,
-    isJPG,
   )
 where
 
 import Config (IPFSConfig (..))
-import Control.Exception (try)
-import Data.Aeson
-import qualified Data.ByteString.Lazy as LBS
+import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.:))
+import qualified Data.ByteString.Char8 as BC
 import qualified Data.Text as T
 import GHC.Generics (Generic)
-import Network.HTTP.Simple
+import Network.HTTP.Simple (getResponseBody, httpLBS, parseRequest_, setRequestHeader, setRequestMethod)
 
--- file representation matching IPFS directory listing
-data IPFSFile = IPFSFile
-  { name :: T.Text, -- file name with path
-    hash :: T.Text, -- file's CID
-    size :: Integer,
-    type_ :: T.Text -- "File" or "Directory"
+data DirectoryEntry = DirectoryEntry
+  { name :: T.Text,
+    hash :: T.Text,
+    tsize :: Integer
   }
   deriving (Show, Generic)
 
-instance FromJSON IPFSFile where
-  parseJSON = withObject "IPFSFile" $ \v ->
-    IPFSFile
-      <$> v .: "name"
-      <*> v .: "hash"
-      <*> v .: "size"
-      <*> v .: "type"
-
--- directory listing from IPFS gateway
-newtype DirectoryListing = DirectoryListing
-  { entries :: [IPFSFile]
+newtype IPFSHash = IPFSHash
+  { hashValue :: T.Text
   }
   deriving (Show, Generic)
 
-instance FromJSON DirectoryListing
+newtype IPFSDirectory = IPFSDirectory
+  { links :: [DirectoryEntry]
+  }
+  deriving (Show, Generic)
 
-makeIPFSUrl :: IPFSConfig -> T.Text -> T.Text
-makeIPFSUrl cfg path =
+instance FromJSON IPFSDirectory where
+  parseJSON = withObject "IPFSDirectory" $ \v ->
+    IPFSDirectory
+      <$> v .: "Links"
+
+instance FromJSON IPFSHash where
+  parseJSON = withObject "IPFSHash" $ \v ->
+    IPFSHash
+      <$> v .: "/"
+
+instance FromJSON DirectoryEntry where
+  parseJSON = withObject "DirectoryEntry" $ \v -> do
+    _name <- v .: "Name"
+    hashObj <- v .: "Hash"
+    _hashValue <- hashObj .: "/"
+    _tsize <- v .: "Tsize"
+    return $ DirectoryEntry _name _hashValue _tsize
+
+-- for accessing content - uses the configured gateway
+makeIPFSUrl :: IPFSConfig -> DirectoryEntry -> T.Text
+makeIPFSUrl cfg entry =
   gateway cfg
     <> "/ipfs/"
     <> folderCID cfg
-    <> (if T.null path then "" else "/" <> path)
+    <> "/"
+    <> name entry
 
-isJPG :: T.Text -> Bool
-isJPG filename =
-  any
-    (`T.isSuffixOf` T.toLower filename)
-    [".jpg", ".jpeg"]
+-- for listing directory contents - uses Pinata gateway
+listPinataDirectory :: IPFSConfig -> IO (Either String [DirectoryEntry])
+listPinataDirectory cfg = do
+  let url = "https://gateway.pinata.cloud/ipfs/" <> T.unpack (folderCID cfg) <> "?format=dag-json"
+      request =
+        setRequestMethod "GET" $
+          setRequestHeader "Authorization" [BC.pack $ "Bearer " <> T.unpack (pinataToken cfg)] $
+            setRequestHeader "Accept" ["application/json"] $
+              parseRequest_ url
 
-listIPFSDirectory :: IPFSConfig -> IO [IPFSFile]
-listIPFSDirectory cfg = do
-  let url = gateway cfg <> "/ipfs/" <> folderCID cfg <> "?format=json"
-  request <- parseRequest (T.unpack url)
-  response <- try (httpLBS request) :: IO (Either HttpException (Response LBS.ByteString))
-  case response of
-    Right res -> do
-      case eitherDecode (getResponseBody res) of
-        Right listing -> return $ filter (\f -> type_ f == "File") $ entries listing
-        Left err -> do
-          putStrLn $ "error parsing directory listing: " ++ err
-          return []
-    Left err -> do
-      putStrLn $ "error fetching directory listing: " ++ show err
-      return []
+  response <- httpLBS request
+  let result = eitherDecode $ getResponseBody response
+  pure $ case result of
+    Left err -> Left err
+    Right obj -> Right (links obj)
