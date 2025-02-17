@@ -17,24 +17,11 @@
           version = "0.1.0.0";
           src = ./.;
 
-          buildInputs = with pkgs; [ haskellPackages.cabal2nix gcc libgit2 zlib ];
-
-          meta = with pkgs.lib; {
-            description = "My Haskell Project";
-            license = licenses.mit;
-          };
+          buildInputs = with pkgs; [ haskellPackages.cabal2nix gcc gmp libgit2 zlib ];
         };
 
         devShells.${system}.default = pkgs.mkShell {
-          buildInputs = with pkgs; [ haskellPackages.cabal2nix pkgs.gcc pkgs.zlib ];
-        };
-
-        packages.${system}.my-haskell-app = pkgs.stdenv.mkDerivation rec {
-          pname = "bitsofsaturn";
-          version = "0.1.0.0";
-          src = ./.;
-
-          buildInputs = with pkgs; [ haskellPackages.cabal2nix gcc libgit2 zlib ];
+          buildInputs = with pkgs; [ haskellPackages.cabal2nix gcc gmp zlib ];
         };
       });
 }
