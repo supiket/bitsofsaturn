@@ -23,8 +23,12 @@
             gcc
             gmp
             libgit2
-            (if system == "aarch64-darwin" then zlib else null)
+            zlib
           ];
+
+          shellHook = ''
+            export CABAL_CONFIGURE_OPTIONS="--disable-library-for-ghc --allow-newer"
+          '';
         };
 
         devShells.${system}.default = pkgs.mkShell {
@@ -32,8 +36,12 @@
             haskellPackages.cabal2nix
             gcc
             gmp
-            (if system == "aarch64-darwin" then zlib else null)
+            zlib
           ];
+
+          shellHook = ''
+            export CABAL_CONFIGURE_OPTIONS="--disable-library-for-ghc --allow-newer"
+          '';
         };
       });
 }
