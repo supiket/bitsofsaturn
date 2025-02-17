@@ -1,0 +1,34 @@
+name: bitsofsaturn
+version: 0.1.0.0
+synopsis: raw images of saturn taken by cassini
+description: bot that periodically posts saturn images
+author: bikem
+maintainer: bengisuozaydin@gmail.com
+resolver: lts-18.14
+
+dependencies:
+  - aeson
+  - base >= 4.7 && < 5
+  - bytestring
+  - directory
+  - filepath
+  - http-client
+  - http-conduit
+  - random
+  - text
+
+executables:
+  bits-of-saturn:
+    main: Main.hs
+    source-dirs: app
+    other-modules:
+      - Config
+      - IPFS
+      - Farcaster
+    ghc-options:
+      - -Wall
+    default-extensions:
+      - DeriveGeneric
+      - LambdaCase
+      - OverloadedStrings
+    default-language: Haskell2010

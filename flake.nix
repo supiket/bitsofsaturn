@@ -1,4 +1,3 @@
-
 {
   description = "bits of saturn";
 
@@ -19,18 +18,18 @@
           src = ./.;
 
           buildInputs = with pkgs; [
-            haskellPackages.cabal2nix
-            gcc
+            gcc-unwrapped
             gmp
             libgit2
+            stack
           ];
         };
 
         devShells.${system}.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            haskellPackages.cabal2nix
-            gcc
+            gcc-unwrapped
             gmp
+            stack
           ];
         };
       });
