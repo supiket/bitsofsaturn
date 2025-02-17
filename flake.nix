@@ -23,12 +23,7 @@
             gcc
             gmp
             libgit2
-            zlib
           ];
-
-          shellHook = ''
-            export CABAL_CONFIGURE_OPTIONS="--disable-library-for-ghc --allow-newer"
-          '';
         };
 
         devShells.${system}.default = pkgs.mkShell {
@@ -36,12 +31,7 @@
             haskellPackages.cabal2nix
             gcc
             gmp
-            zlib
           ];
-
-          shellHook = ''
-            export CABAL_CONFIGURE_OPTIONS="--disable-library-for-ghc --allow-newer"
-          '';
         };
       });
 }
