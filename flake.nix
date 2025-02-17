@@ -1,3 +1,4 @@
+
 {
   description = "bits of saturn";
 
@@ -17,11 +18,22 @@
           version = "0.1.0.0";
           src = ./.;
 
-          buildInputs = with pkgs; [ haskellPackages.cabal2nix gcc gmp libgit2 zlib ];
+          buildInputs = with pkgs; [
+            haskellPackages.cabal2nix
+            gcc
+            gmp
+            libgit2
+            (if system == "aarch64-darwin" then pkgs.zlib else null)
+          ];
         };
 
         devShells.${system}.default = pkgs.mkShell {
-          buildInputs = with pkgs; [ haskellPackages.cabal2nix gcc gmp zlib ];
+          buildInputs = with pkgs; [
+            haskellPackages.cabal2nix
+            gcc
+            gmp
+            (if system == "aarch64-darwin" then pkgs.zlib else null)
+          ];
         };
       });
 }
