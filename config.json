@@ -1,6 +1,6 @@
 {
     "ipfsConfig": {
-        "gateway": "${IPFS_GATEWAY}"
+        "gateway": "${IPFS_GATEWAY}",
         "folderCID": "${IPFS_FOLDER_CID}"
     },
     "farcasterConfig": {
@@ -12,5 +12,5 @@
         "accessToken": "${X_ACCESS_TOKEN}",
         "accessSecret": "${X_ACCESS_SECRET}"
     },
-    "intervalMinutes": 240
+    "intervalMinutes": "${INTERVAL_MINUTES}"
 }

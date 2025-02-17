@@ -8,19 +8,22 @@ module Config
     FarcasterConfig (..),
     IPFSConfig (..),
     loadConfig,
+    deserializeInterval,
   )
 where
 
 import Data.Aeson
 import qualified Data.Text as T
 import GHC.Generics (Generic)
-import System.Environment (getEnv)
+import System.Environment (lookupEnv)
+import System.IO (hPutStrLn, stderr)
+import Text.Read (readMaybe)
 
 data Config = Config
   { ipfsConfig :: IPFSConfig,
     farcasterConfig :: FarcasterConfig,
     xConfig :: XConfig,
-    intervalMinutes :: Int
+    intervalMinutes :: T.Text
   }
   deriving (Show, Generic)
 
@@ -53,8 +56,21 @@ instance FromJSON XConfig
 
 resolveEnvVar :: T.Text -> IO T.Text
 resolveEnvVar t = case T.stripPrefix "${" t >>= T.stripSuffix "}" of
-  Just var -> T.pack <$> getEnv (T.unpack var)
+  Just var -> do
+    mValue <- lookupEnv (T.unpack var)
+    case mValue of
+      Just value -> pure $ T.pack value
+      Nothing -> do
+        hPutStrLn stderr $ "warning: environment variable " ++ T.unpack var ++ " not found, using empty string"
+        pure T.empty
   Nothing -> pure t
+
+deserializeInterval :: T.Text -> Int
+deserializeInterval t =
+  let defaultValue = 240
+   in case readMaybe (T.unpack t) of
+        Just n -> n
+        Nothing -> defaultValue
 
 loadConfig :: FilePath -> IO Config
 loadConfig path = do
@@ -79,9 +95,12 @@ loadConfig path = do
       <*> resolveEnvVar (accessToken $ xConfig rawConfig)
       <*> resolveEnvVar (accessSecret $ xConfig rawConfig)
 
+  resolvedInterval <- resolveEnvVar (intervalMinutes rawConfig)
+
   return $
     rawConfig
       { ipfsConfig = resolvedIpfsConf,
         farcasterConfig = resolvedFarcasterConf,
-        xConfig = resolvedXConf
+        xConfig = resolvedXConf,
+        intervalMinutes = resolvedInterval
       }

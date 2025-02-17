@@ -68,7 +68,7 @@ main = forever $ do
   case jpgFiles of
     [] -> do
       putStrLn "no files to process"
-      sleep (intervalMinutes cfg)
+      sleep (deserializeInterval (intervalMinutes cfg))
     bits -> do
       -- Select a random file
       randomIndex <- randomRIO (0, length bits - 1)
@@ -76,4 +76,4 @@ main = forever $ do
 
       putStrLn $ "randomly selected: " ++ T.unpack (name selectedBit)
       processFile cfg selectedBit
-      sleep (intervalMinutes cfg)
+      sleep (deserializeInterval (intervalMinutes cfg))
