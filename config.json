@@ -1,0 +1,12 @@
+{
+    "ipfsConfig": {
+        "gateway": "${IPFS_GATEWAY}",
+        "folderCID": "${IPFS_FOLDER_CID}",
+        "pinataToken": "${PINATA_TOKEN}"
+    },
+    "farcasterConfig": {
+        "neynarApiKey": "${NEYNAR_API_KEY}",
+        "neynarUuid": "${NEYNAR_UUID}"
+    },
+    "intervalMinutes": "${INTERVAL_MINUTES}"
+}

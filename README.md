@@ -1,10 +1,5 @@
 # bitsofsaturn
-twitter bot that posts images of saturn
+bot that posts raw images of saturn taken by cassini spacecraft.
 
-
-The images to be tweeted are located in a subdirectory names "bits". 
-Change the directory hierarchy as you wish, and insert your personal twitter API keys.
-
-
-To see the bot in action, check:
-twitter.com/bitsofsaturn
+to see the bot in action, see:
+x.com/bitsofsaturn
