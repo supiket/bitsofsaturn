@@ -26,4 +26,4 @@ jobs:
           echo "LC_ALL=en_US.UTF-8" >> $GITHUB_ENV
 
       - name: Enter nix develop shell and build
-        run: nix develop --command bash -c "stack setup && stack build"
+        run: nix develop --command bash -c "cabal clean && cabal update && cabal build"
