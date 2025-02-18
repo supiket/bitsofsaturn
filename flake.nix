@@ -19,18 +19,30 @@
 
           buildInputs = with pkgs; [
             gcc-unwrapped
+            glibcLocales
             gmp
             libgit2
             stack
           ];
+
+          shellHook = ''
+            export LANG=en_US.UTF-8
+            export LC_ALL=en_US.UTF-8
+          '';
         };
 
         devShells.${system}.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             gcc-unwrapped
+            glibcLocales
             gmp
             stack
           ];
+
+          shellHook = ''
+            export LANG=en_US.UTF-8
+            export LC_ALL=en_US.UTF-8
+          '';
         };
       });
 }
