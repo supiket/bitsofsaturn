@@ -8,6 +8,7 @@ import qualified Data.ByteString.Lazy as BL
 import Data.Char (isAlphaNum)
 import qualified Data.Text as T
 import Farcaster
+import GHC.IO.Encoding (setLocaleEncoding, utf8)
 import IPFS
 import Network.HTTP.Simple (HttpException, Response, getResponseBody, httpLBS, parseRequest)
 import System.Directory (createDirectoryIfMissing, removeFile)
@@ -61,6 +62,7 @@ sleep minutes = do
 
 main :: IO ()
 main = forever $ do
+  setLocaleEncoding utf8
   cfg <- loadConfig "config.json"
   entries <- listPinataDirectory (ipfsConfig cfg)
   case entries of
