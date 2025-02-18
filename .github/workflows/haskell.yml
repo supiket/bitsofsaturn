@@ -19,5 +19,8 @@ jobs:
       - name: Set up Nix
         uses: cachix/install-nix-action@v23
 
+      - name: Set up environment variables
+        run: echo "GHC_CHARENC=GHC_NO_UNICODE" >> $GITHUB_ENV
+
       - name: Enter nix develop shell and build
         run: nix develop --command bash -c "stack setup && stack build"
