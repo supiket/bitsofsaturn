@@ -5,6 +5,6 @@ COPY . .
 
 RUN nix-env -iA nixpkgs.nix && \
     nix-channel --update && \
-    nix develop --command bash -c "stack build"
+    nix develop --extra-experimental-features nix-command --extra-experimental-features flakes --command bash -c "stack build"
 
-CMD ["nix", "develop", "--command", "stack", "run"]
+CMD ["nix", "develop", "--extra-experimental-features", "nix-command flakes", "--command", "stack", "run"]
