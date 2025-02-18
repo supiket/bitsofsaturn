@@ -23,4 +23,9 @@ if [ ! -x "/run/current-system/sw/bin/nix" ]; then
 fi
 
 echo "$DATE_FORMAT - running nix develop..." >> $LOG_FILE
-/run/current-system/sw/bin/nix develop --command cabal run >> $LOG_FILE 2>> $ERROR_FILE
+/run/current-system/sw/bin/nix develop --command cabal build --enable-optimization=2 >> $LOG_FILE 2>> $ERROR_FILE
+
+EXECUTABLE=$(/run/current-system/sw/bin/nix develop --command cabal list-bin exe:bits-of-saturn)
+
+echo "$DATE_FORMAT - running $EXECUTABLE..." >> $LOG_FILE
+script -q /dev/null $EXECUTABLE >> $LOG_FILE 2>&1
