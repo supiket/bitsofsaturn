@@ -1,0 +1,34 @@
+cabal-version:      3.0
+name:               bitsofsaturn
+version:            0.1.0.0
+synopsis:           raw images of saturn taken by cassini
+description:        bot that periodically posts bits of saturn
+author:             bikem
+maintainer:         bengisuozaydin@gmail.com
+category:           Web
+build-type:         Simple
+
+common warnings
+    ghc-options: -Wall
+
+executable bits-of-saturn
+    import:           warnings
+    main-is:          Main.hs
+    other-modules:    Config
+                    , IPFS
+                    , Farcaster
+    build-depends:    base
+                    , aeson
+                    , bytestring
+                    , directory
+                    , filepath
+                    , http-client
+                    , http-conduit
+                    , random
+                    , text
+    hs-source-dirs:   app
+    default-extensions: DeriveGeneric
+                        , LambdaCase
+                        , OverloadedStrings
+    default-language: Haskell2010
+    ghc-options:      -Wall

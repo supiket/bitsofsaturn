@@ -18,11 +18,13 @@
           src = ./.;
 
           buildInputs = with pkgs; [
+            cabal-install
             gcc-unwrapped
+            ghc
             glibcLocales
             gmp
+            haskellPackages.cabal2nix
             libgit2
-            stack
           ];
 
           shellHook = ''
@@ -33,10 +35,12 @@
 
         devShells.${system}.default = pkgs.mkShell {
           buildInputs = with pkgs; [
+            cabal-install
             gcc-unwrapped
+            ghc
             glibcLocales
             gmp
-            stack
+            haskellPackages.cabal2nix
           ];
 
           shellHook = ''

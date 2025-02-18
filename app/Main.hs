@@ -77,6 +77,8 @@ main = forever $ do
           putStrLn "no files to process"
           sleep (deserializeInterval (intervalMinutes cfg))
         bits -> do
+          randomSleep <- randomRIO (0, 30 :: Int)
+          sleep randomSleep
           randomIndex <- randomRIO (0, length bits - 1)
           let selectedBit = bits !! randomIndex
           putStrLn $ "randomly selected: " ++ T.unpack (name selectedBit)
