@@ -20,7 +20,7 @@ dependencies:
 executables:
   bits-of-saturn:
     main: Main.hs
-    source-dirs: app
+    source-dirs: src
     other-modules:
       - Config
       - IPFS
