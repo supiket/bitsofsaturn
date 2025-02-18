@@ -23,5 +23,4 @@ if [ ! -x "/run/current-system/sw/bin/nix" ]; then
 fi
 
 echo "$DATE_FORMAT - running nix develop..." >> $LOG_FILE
-echo "$DATE_FORMAT - in nix environment" >> $LOG_FILE
 /run/current-system/sw/bin/nix develop --command cabal run >> $LOG_FILE 2>> $ERROR_FILE
