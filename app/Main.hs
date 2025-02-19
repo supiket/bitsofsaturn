@@ -12,6 +12,7 @@ import GHC.IO.Encoding (setLocaleEncoding, utf8)
 import IPFS
 import Network.HTTP.Simple (HttpException, Response, getResponseBody, httpLBS, parseRequest)
 import System.Directory (createDirectoryIfMissing, removeFile)
+import System.Environment (getEnv)
 import System.FilePath ((</>))
 import System.Random (randomRIO)
 
@@ -41,8 +42,8 @@ processFile :: Config -> DirectoryEntry -> IO ()
 processFile cfg entry = do
   let ipfsUrl = makeIPFSUrl (ipfsConfig cfg) entry
   putStrLn $ "processing: " ++ T.unpack (name entry)
-  let tempPath = "temp" </> T.unpack (name entry)
-  createDirectoryIfMissing True "temp"
+  temp <- getEnv "BOS_TEMP"
+  let tempPath = temp </> T.unpack (name entry)
   downloadSuccess <- downloadImage ipfsUrl tempPath
   if downloadSuccess
     then do
@@ -63,7 +64,7 @@ sleep minutes = do
 main :: IO ()
 main = forever $ do
   setLocaleEncoding utf8
-  cfg <- loadConfig "config.json"
+  cfg <- getEnv "BOS_CONFIG" >>= loadConfig
   entries <- listPinataDirectory (ipfsConfig cfg)
   case entries of
     Left err -> do
