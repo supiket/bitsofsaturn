@@ -3,7 +3,6 @@ module Main where
 import Config
 import Control.Concurrent (threadDelay)
 import Control.Exception (try)
-import Control.Monad (forever)
 import qualified Data.ByteString.Lazy as BL
 import Data.Char (isAlphaNum)
 import qualified Data.Text as T
@@ -11,7 +10,7 @@ import Farcaster
 import GHC.IO.Encoding (setLocaleEncoding, utf8)
 import IPFS
 import Network.HTTP.Simple (HttpException, Response, getResponseBody, httpLBS, parseRequest)
-import System.Directory (createDirectoryIfMissing, removeFile)
+import System.Directory (removeFile)
 import System.Environment (getEnv)
 import System.FilePath ((</>))
 import System.Random (randomRIO)
@@ -62,26 +61,21 @@ sleep minutes = do
   threadDelay microseconds
 
 main :: IO ()
-main = forever $ do
+main = do
   setLocaleEncoding utf8
   cfg <- getEnv "BOS_CONFIG" >>= loadConfig
   entries <- listPinataDirectory (ipfsConfig cfg)
   case entries of
     Left err -> do
       putStrLn $ "error listing directory: " ++ err
-      sleep (deserializeInterval (intervalMinutes cfg))
     Right entries' -> do
       let validFiles = filter (isValidImage . name) entries'
       putStrLn $ "found " ++ show (length validFiles) ++ " valid image files"
       case validFiles of
         [] -> do
           putStrLn "no files to process"
-          sleep (deserializeInterval (intervalMinutes cfg))
         bits -> do
-          randomSleep <- randomRIO (0, 30 :: Int)
-          sleep randomSleep
           randomIndex <- randomRIO (0, length bits - 1)
           let selectedBit = bits !! randomIndex
           putStrLn $ "randomly selected: " ++ T.unpack (name selectedBit)
           processFile cfg selectedBit
-          sleep (deserializeInterval (intervalMinutes cfg))

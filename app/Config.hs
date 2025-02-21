@@ -7,7 +7,6 @@ module Config
     FarcasterConfig (..),
     IPFSConfig (..),
     loadConfig,
-    deserializeInterval,
   )
 where
 
@@ -15,6 +14,7 @@ import Data.Aeson (FromJSON, decodeFileStrict)
 import qualified Data.Text as T
 import GHC.Generics (Generic)
 import System.Environment (lookupEnv)
+import System.Exit (exitFailure)
 import System.IO (hPutStrLn, stderr)
 import Text.Read (readMaybe)
 
@@ -55,12 +55,13 @@ resolveEnvVar t = case T.stripPrefix "${" t >>= T.stripSuffix "}" of
         pure T.empty
   Nothing -> pure t
 
-deserializeInterval :: T.Text -> Int
-deserializeInterval t =
-  let defaultValue = 240
-   in case readMaybe (T.unpack t) of
-        Just n -> n
-        Nothing -> defaultValue
+resolveInterval :: T.Text -> IO Int
+resolveInterval t = do
+  case readMaybe (T.unpack t) of
+    Just interval -> return interval
+    Nothing -> do
+      hPutStrLn stderr $ "error: parsing interval minutes " ++ T.unpack t
+      exitFailure
 
 loadConfig :: FilePath -> IO Config
 loadConfig path = do
@@ -80,11 +81,12 @@ loadConfig path = do
       <$> resolveEnvVar (neynarApiKey $ farcasterConfig rawConfig)
       <*> resolveEnvVar (neynarUuid $ farcasterConfig rawConfig)
 
-  resolvedInterval <- resolveEnvVar (intervalMinutes rawConfig)
+  interval <- resolveEnvVar (intervalMinutes rawConfig)
+  _resolvedInterval <- resolveInterval interval
 
   return $
     rawConfig
       { ipfsConfig = resolvedIpfsConf,
         farcasterConfig = resolvedFarcasterConf,
-        intervalMinutes = resolvedInterval
+        intervalMinutes = interval
       }
