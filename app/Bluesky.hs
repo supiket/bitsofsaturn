@@ -111,7 +111,7 @@ uploadBlob jwt imgPath = do
       let req =
             setRequestBody (RequestBodyLBS imgBytes) $
               setRequestHeader "Authorization" ["Bearer " <> TE.encodeUtf8 jwt] $
-                setRequestHeader "Content-Type" ["image/jpeg"] $ -- TODO: guess from file extension
+                setRequestHeader "Content-Type" ["image/jpeg"] $
                   initReq
       result <- try (httpLBS req) :: IO (Either SomeException (Response BL.ByteString))
       case result of
