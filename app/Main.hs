@@ -52,7 +52,7 @@ processFile cfg entry = do
       farcasterSuccess <- postCastWithImage (farcasterConfig cfg) postText ipfsUrl
       putStrLn $ "farcaster post: " ++ if farcasterSuccess then "success" else "failed"
 
-      blueskySuccess <- postWithImage (blueskyConfig cfg) postText ipfsUrl
+      blueskySuccess <- postWithImage (blueskyConfig cfg) postText tempPath
       putStrLn $ "bluesky post: " ++ if blueskySuccess then "success" else "failed"
 
       removeFile tempPath

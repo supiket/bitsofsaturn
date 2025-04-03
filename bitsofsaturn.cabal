@@ -24,8 +24,10 @@ executable bits-of-saturn
                     , filepath
                     , http-client
                     , http-conduit
+                    , http-types
                     , random
                     , text
+                    , time
     hs-source-dirs:   app
     default-extensions: DeriveGeneric
                         , LambdaCase
