@@ -1,5 +1,6 @@
 module Main where
 
+import Bluesky
 import Config
 import Control.Concurrent (threadDelay)
 import Control.Exception (try)
@@ -50,6 +51,9 @@ processFile cfg entry = do
 
       farcasterSuccess <- postCastWithImage (farcasterConfig cfg) postText ipfsUrl
       putStrLn $ "farcaster post: " ++ if farcasterSuccess then "success" else "failed"
+
+      blueskySuccess <- postWithImage (blueskyConfig cfg) postText ipfsUrl
+      putStrLn $ "bluesky post: " ++ if blueskySuccess then "success" else "failed"
 
       removeFile tempPath
     else putStrLn "failed to download image"
