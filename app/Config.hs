@@ -3,7 +3,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Config
-  ( Config (..),
+  ( BlueskyConfig (..),
+    Config (..),
     FarcasterConfig (..),
     IPFSConfig (..),
     loadConfig,
@@ -21,6 +22,7 @@ import Text.Read (readMaybe)
 data Config = Config
   { ipfsConfig :: IPFSConfig,
     farcasterConfig :: FarcasterConfig,
+    blueskyConfig :: BlueskyConfig,
     intervalMinutes :: T.Text
   }
   deriving (Show, Generic)
@@ -38,11 +40,19 @@ data FarcasterConfig = FarcasterConfig
   }
   deriving (Show, Generic)
 
+data BlueskyConfig = BlueskyConfig
+  { blueskyIdentifier :: T.Text,
+    blueskyPassword :: T.Text
+  }
+  deriving (Show, Generic)
+
 instance FromJSON Config
 
 instance FromJSON IPFSConfig
 
 instance FromJSON FarcasterConfig
+
+instance FromJSON BlueskyConfig
 
 resolveEnvVar :: T.Text -> IO T.Text
 resolveEnvVar t = case T.stripPrefix "${" t >>= T.stripSuffix "}" of
@@ -81,6 +91,11 @@ loadConfig path = do
       <$> resolveEnvVar (neynarApiKey $ farcasterConfig rawConfig)
       <*> resolveEnvVar (neynarUuid $ farcasterConfig rawConfig)
 
+  resolvedBlueskyConf <-
+    BlueskyConfig
+      <$> resolveEnvVar (blueskyIdentifier $ blueskyConfig rawConfig)
+      <*> resolveEnvVar (blueskyPassword $ blueskyConfig rawConfig)
+
   interval <- resolveEnvVar (intervalMinutes rawConfig)
   _resolvedInterval <- resolveInterval interval
 
@@ -88,5 +103,6 @@ loadConfig path = do
     rawConfig
       { ipfsConfig = resolvedIpfsConf,
         farcasterConfig = resolvedFarcasterConf,
+        blueskyConfig = resolvedBlueskyConf,
         intervalMinutes = interval
       }

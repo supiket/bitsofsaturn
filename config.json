@@ -8,5 +8,9 @@
         "neynarApiKey": "${NEYNAR_API_KEY}",
         "neynarUuid": "${NEYNAR_UUID}"
     },
+    "blueskyConfig": {
+        "blueskyIdentifier": "${BLUESKY_IDENTIFIER}",
+        "blueskyPassword": "${BLUESKY_PASSWORD}"
+    },
     "intervalMinutes": "${INTERVAL_MINUTES}"
 }
