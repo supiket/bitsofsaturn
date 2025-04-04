@@ -1,9 +1,8 @@
-# bitsofsaturn
-bot that posts raw images of saturn taken by cassini spacecraft.
+bot that posts raw images of saturn taken by cassini-huygens.
 
-to see the bot in action, see:
-https://bsky.app/profile/bitsofsaturn.bsky.social
-https://warpcast.com/bitsofsaturn
+### see in action:
+- https://bsky.app/profile/bitsofsaturn.bsky.social
+- https://warpcast.com/bitsofsaturn
 
-archive:
+### archive:
 https://x.com/bitsofsaturn
